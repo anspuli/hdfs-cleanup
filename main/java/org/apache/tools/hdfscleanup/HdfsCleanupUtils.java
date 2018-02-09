@@ -23,19 +23,17 @@ public class HdfsCleanupUtils {
 
   }
 
-  public FileSystem hdfsConnect(boolean mode, Configuration conf, String user, String keytab) throws IOException {
+  public FileSystem hdfsSimpleConnect(Configuration conf) throws IOException {
+    FileSystem hdfs = FileSystem.get(conf);
+    return hdfs;
+  }
 
-    if (mode) {
-      log.info("Running in development mode");
-      log.info("Connecting to hdfs://localhost:9000");
-      String uri = "hdfs://localhost:9000";
-      conf.set("fs.defaultFS", uri);
-    } else {
-      //authentication using hdfs username for production
-      conf.set("hadoop.security.authentication", "kerberos");
-      UserGroupInformation.setConfiguration(conf);
-      UserGroupInformation.loginUserFromKeytab(user, keytab);
-    }
+  public FileSystem hdfsKerberosConnect(Configuration conf, String user, String keytab) throws IOException {
+
+    //  authentication using hdfs username for production
+    //    conf.set("hadoop.security.authentication", "kerberos");
+    UserGroupInformation.setConfiguration(conf);
+    UserGroupInformation.loginUserFromKeytab(user, keytab);
     FileSystem hdfs = FileSystem.get(conf);
     return hdfs;
   }

@@ -76,20 +76,6 @@ public class HdfsCleanup {
       dryrun = true;
     }
 
-    if (cli.hasOption("dev")) {
-      dev = true;
-      log.info("Running in development Mode ( hdfs://localhost:9000 )");
-    } else {
-      if (cli.hasOption("keytab") && cli.hasOption("user")) {
-        user = cli.getOptionValue("user");
-        keytab = cli.getOptionValue("keytab");
-        log.info("User principle is " + user + " and keytab is " + keytab);
-      } else {
-        log.error("Both user and keytab has to be specified. Use '--help' to see the cli options");
-        System.exit(2);
-      }
-    }
-
     log.info("Current time is " + now);
     log.info("XML Config file is " + configFile);
     File file = new File(configFile);
@@ -112,6 +98,7 @@ public class HdfsCleanup {
     }
 
     Configuration conf = new Configuration();
+
     HdfsCleanupXMLParser xmlParser = new HdfsCleanupXMLParser();
 
     hdfsObjects = xmlParser.createHdfsPathObjectFromXML(doc, "dirPath");
@@ -128,6 +115,8 @@ public class HdfsCleanup {
         log.info("Hdfs paths to cleanup: " + hdfsObjects.get(i).pathToCheck);
         log.info("[" + hdfsObjects.get(i).pathToCheck + "] Hdfs directory lookupLevel: "
             + hdfsObjects.get(i).lookupLevel);
+        log.info("[" + hdfsObjects.get(i).delBatchsize + "] Hdfs directory delBatchsize: "
+            + hdfsObjects.get(i).delBatchsize);
         log.info("[" + hdfsObjects.get(i).pathToCheck + "] Hdfs defaultFileRetention: "
             + hdfsObjects.get(i).myRetentionMap.get("defaultFileRetention"));
         log.info("[" + hdfsObjects.get(i).pathToCheck + "] Hdfs defaultDirRetention: "
@@ -152,7 +141,27 @@ public class HdfsCleanup {
 
         HdfsCleanupUtils hcp = new HdfsCleanupUtils();
         HdfsCleanupFindPaths hfindpaths = new HdfsCleanupFindPaths();
-        FileSystem hdfs = hcp.hdfsConnect(dev, conf, user, keytab);
+        FileSystem hdfs = null;
+
+        /* Checking the cluster authentication Mechanism */
+        String authentication = conf.get("hadoop.security.authentication");
+
+        if (authentication.equals("kerberos")) {
+          log.info("Cluster is kerberized");
+          if (cli.hasOption("keytab") && cli.hasOption("user")) {
+            user = cli.getOptionValue("user");
+            keytab = cli.getOptionValue("keytab");
+            log.info("User principle is " + user + " and keytab is " + keytab);
+            hdfs = hcp.hdfsKerberosConnect(conf, user, keytab);
+          } else {
+            log.error("Both user and keytab has to be specified. Use '--help' to see the cli options");
+            log.error("Exiting the script");
+            System.exit(2);
+          }
+        } else if (authentication.equals("simple")) {
+          log.info("kerberos Authentication is NOT enabled. Authentication is " + authentication);
+          hdfs = hcp.hdfsSimpleConnect(conf);
+        }
 
         try {
           if (!hdfs.exists(path)) {
@@ -185,7 +194,7 @@ public class HdfsCleanup {
               numDel = numDel + 1;
               log.info("[" + hdfsObjects.get(i).pathToCheck + "] Deleting the file " + pathsToDelete.get(k));
               hcp.deletePath(pathsToDelete.get(k), hdfs);
-              if (numDel % 10 == 0) {
+              if (numDel % hdfsObjects.get(i).delBatchsize == 0) {
                 log.info("[" + hdfsObjects.get(i).pathToCheck + "] Deleted " + numDel
                     + " files. Sleeping for 60seconds");
                 Thread.sleep(60000);

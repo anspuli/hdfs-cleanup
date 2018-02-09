@@ -16,6 +16,15 @@ public class HdfsCleanupXMLParser {
 
   static Logger log = Logger.getLogger(HdfsCleanupXMLParser.class);
 
+  private static String getTagValue(String tag, Element eElement) {
+    NodeList nList = eElement.getElementsByTagName(tag).item(0).getChildNodes();
+    Node nValue = (Node) nList.item(0);
+    if (nValue == null) {
+      return null;
+    }
+    return nValue.getNodeValue();
+  }
+
   public ArrayList<HdfsCleanupPathObject> createHdfsPathObjectFromXML(Document doc, String param) {
     NodeList nList = null;
     NodeList nRegexList = null;
@@ -44,9 +53,24 @@ public class HdfsCleanupXMLParser {
         nNode = nList.item(i);
         Element element = (Element) nNode;
         HdfsCleanupPathObject hdfsPathObject = new HdfsCleanupPathObject();
-        hdfsPathObject.pathToCheck = element.getElementsByTagName("path").item(0).getTextContent().trim();
-        hdfsPathObject.lookupLevel =
-            Integer.parseInt(element.getElementsByTagName("lookupLevel").item(0).getTextContent().trim());
+
+        if (getTagValue("path", element) != null) {
+          hdfsPathObject.pathToCheck = getTagValue("path", element);
+        } else {
+          hdfsPathObject.pathToCheck = null;
+        }
+
+        if (getTagValue("lookupLevel", element) != null) {
+          hdfsPathObject.lookupLevel = Integer.parseInt(getTagValue("lookupLevel", element));
+        } else {
+          hdfsPathObject.lookupLevel = 1;
+        }
+
+        if (getTagValue("delBatchsize", element) != null) {
+          hdfsPathObject.delBatchsize = Integer.parseInt(getTagValue("delBatchsize", element));
+        } else {
+          hdfsPathObject.delBatchsize = 10;
+        }
 
         if (element.getElementsByTagName("defaultFileRetention").item(0).getTextContent().trim() != null) {
           defaultFileRetention =
