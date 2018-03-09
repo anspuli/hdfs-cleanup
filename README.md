@@ -1,5 +1,5 @@
 # hdfs-cleanup
-A multi purpose Hadoop HDFS cleanup script using JAVA API's
+Hadoop HDFS cleanup script using JAVA API's
 
 ## How to Build the jar
 ```
