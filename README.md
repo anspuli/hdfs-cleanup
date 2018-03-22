@@ -1,6 +1,10 @@
 # hdfs-cleanup
 Hadoop HDFS cleanup script using JAVA API's
 
+### Build status
+   * TravisCI:
+     * [![Build Status](https://travis-ci.org/anspuli/hdfs-cleanup.svg?branch=master)](https://travis-ci.org/anspuli/hdfs-cleanup.svg?branch=master)
+
 ## How to Build the jar
 ```
 $git clone https://github.com/anspuli/hdfs-cleanup
