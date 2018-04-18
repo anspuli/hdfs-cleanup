@@ -1,5 +1,5 @@
 # hdfs-cleanup
-Hadoop HDFS cleanup script using JAVA API's
+Hadoop HDFS cleanup script using JAVA API's . Refer the wiki for more details  [hdfs-cleanup help](https://github.com/anspuli/hdfs-cleanup/wiki)
 
 ### Build status
    * TravisCI:
